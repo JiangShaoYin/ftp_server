@@ -8,7 +8,7 @@ typedef struct tag_node {
 }fd_node,*p_fd_node;
 //队列结构体
 typedef struct{
-	pnode_t que_head, fd_queueail;
+	pfd_node que_head, que_tail;
 	int que_capacity;
 	int que_size;
 	pthread_mutex_t que_mutex;
@@ -16,7 +16,7 @@ typedef struct{
 //队列初始化
 void que_init(fd_queue*, int);
 //队列元素集合
-void que_set(fd_queue*, node_t*);
+void que_set(fd_queue*, fd_node*);
 //获取队列元素
-void que_get(fd_queue*, pnode_t*);
+void que_get(fd_queue*, pfd_node*);
 #endif

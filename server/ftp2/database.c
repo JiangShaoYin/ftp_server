@@ -1,31 +1,27 @@
 #include "factory.h"
 
-void creat_salt(char* salt,int num)
-{
+void creat_salt(char* salt,int num) {
 	int i,len=0;
 	char* str="0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz,./;'<>?";
 	srand(time(NULL));//系统时间来初始化随机数发生器
 	len=strlen(str);
-	for(i=0;i<num;i++)
-	{
-		salt[i]=str[(rand()%len)];
+	for(i=0;i<num;i++) {
+		salt[i] = str[(rand()%len)];
 	}
 }//随机生成salt值8
 
-int new_account(int new_fd,char* account)
-{
+int new_account(int new_fd,char* account) {
 	char salt[15]={0};
 	char code[512]={0};
 	char salt_c[15]={0};
 	int ret;
 	char flag=0;
-	recv(new_fd,account,sizeof(account),0);
-	ret=Isuser_mysql(new_fd,account);
-	if(ret==1)//用户存在
-	{
+	recv(new_fd, account, sizeof(account), 0);
+	ret=Isuser_mysql(new_fd, account);
+	if(ret==1) { //用户存在
 		printf("用户存在\n!");
 		char flag='r';
-		send(new_fd,&flag,1,0);
+		send(new_fd, &flag, 1, 0);
 		return 0;
 	}else if(ret==-1){
 		printf("可注册！\n");
@@ -50,35 +46,31 @@ int new_account(int new_fd,char* account)
 	}
 }
 
-int login_account(int new_fd,char* account)
-{
+int login_account(int new_fd, char* account) {
 	char salt[15]={0};
 	char code[200]={0};
 	char passwd[15]={0};
 	int ret;
 	char flag=0;
-	recv(new_fd,account,sizeof(account),0);//先接收帐户名
-	ret=Isuser_mysql(new_fd,account);
-	if(ret==-1)
-	{
+	recv(new_fd, account, sizeof(account),0);//先接收帐户名
+	ret = Isuser_mysql(new_fd, account);
+	if(ret == -1) {
 		flag='n';
-		send(new_fd,&flag,1,0);//用户不存在
+		send(new_fd, &flag, 1, 0);//用户不存在
 		return -1;
 	}else{
 		flag='o';
-		send(new_fd,&flag,1,0);//存在就输入密码不返回值
+		send(new_fd, &flag, 1, 0);//存在就输入密码不返回值
 	}
-	ret=query_mysql(new_fd,account);
-	if(ret==0)//密码不正确
-	{
+	ret = query_mysql(new_fd, account);
+	if(ret == 0) { //密码不正确
 		flag='x';
-		send(new_fd,&flag,1,0);
+		send(new_fd, &flag, 1, 0);
 		return 0;
 	}
-	if(ret==1)
-	{
+	if(ret == 1) {
 		flag='o';
-		send(new_fd,&flag,1,0);
+		send(new_fd, &flag, 1, 0);
 		return 1;
 	}//只有0，1的时候还需要接收和发送
 }

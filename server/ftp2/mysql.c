@@ -3,8 +3,7 @@
 #define mysql_User     "root"
 #define mysql_Passwd   "woaini99"
 #define mysql_Database "account"
-int Isuser_mysql(int new_fd,char* account)
-{
+int Isuser_mysql(int new_fd, char* account) {
 	MYSQL *conn;
 	MYSQL_RES *res;
 	MYSQL_ROW row;
@@ -14,35 +13,28 @@ int Isuser_mysql(int new_fd,char* account)
 	char code[512]={0};
 	char buf[128]={0};
 	char flag=0;
-	conn=mysql_init(NULL);
-	bzero(&query,sizeof(query));
+	conn = mysql_init(NULL);
+	bzero(&query, sizeof(query));
 	strcpy(query,"select * from MSG where Username='");
-	sprintf(query,"%s%s%s",query,account,"'");
+	sprintf(query,"%s%s%s",query, account,"'");
 	puts(query);//调试
-	if(!mysql_real_connect(conn,mysql_Server,mysql_User,mysql_Passwd,mysql_Database,0,NULL,0))
-	{
-		printf("Error connecting to database:%s\n",mysql_error(conn));
+	if(mysql_real_connect(conn, mysql_Server, mysql_User, mysql_Passwd, mysql_Database, 0, NULL, 0) == 0) {
+		printf("Error connecting to database:%s\n", mysql_error(conn));
 		return -2;
-	}else
-	{
+	}else {
 		printf("Connected..\n");
 	}
 	int ret;
-	ret=mysql_query(conn,query);
-	if(ret)//空表返回-1
-	{
-		printf("Error making query:%s\n",mysql_error(conn));
+	ret = mysql_query(conn, query);
+	if(ret) { //空表返回-1
+		printf("Error making query:%s\n", mysql_error(conn));
 		mysql_close(conn);
-		//printf("123\n");//测试
 		return -1;
 	}
-	res=mysql_use_result(conn);
-	if(res)
-	{
-		while((row=mysql_fetch_row(res))!=NULL)
-		{
-			if(!strcmp(row[1],account))
-			{
+	res = mysql_use_result(conn);
+	if(res) {
+		while((row = mysql_fetch_row(res)) != NULL) {
+			if(!strcmp(row[1], account)) {
 				mysql_free_result(res);
 				mysql_close(conn);
 				return 1;
@@ -52,9 +44,8 @@ int Isuser_mysql(int new_fd,char* account)
 		mysql_close(conn);
 		return -1;
 	}else{
-		printf("mysql_use_result:%s",mysql_error(conn));
+		printf("mysql_use_result:%s", mysql_error(conn));
 		mysql_close(conn);
-		//printf("456\n");//测试
 		return -1;
 	}
 }

@@ -1,22 +1,27 @@
 #include"factory.h"
 
-void factory_init(fac* pf,pfunc pthread_func,int capacity)
-{
-	pf->pthid=(pthread_t*)calloc(pf->pthread_num,sizeof(pthread_t));
-	pthread_cond_init(&pf->cond,NULL);
-	que_init(&pf->que,capacity);
-	pf->thread_func=pthread_func;
-}//pf->start_flag已在main函数初始化
+// typedef struct{
+// 	pthread_t* pthid;
+// 	pthread_cond_t cond;
+// 	fd_queue que;
+// 	int pthread_num;
+// 	pfunc thread_func;
+// 	int start_flag;
+// }fac, *pfac;
 
-void factory_start(fac* pf)
-{
-	if(pf->start_flag==0)
-	{
+void factory_init(fac* p_factory, pfunc pthread_func, int capacity) {
+	p_factory->pthid = (pthread_t*)calloc(p_factory->pthread_num, sizeof(pthread_t));
+	pthread_cond_init(&p_factory->cond, NULL);
+	que_init(&p_factory->que, capacity);
+	p_factory->thread_func = pthread_func;
+}//p_factory->start_flag已在main函数初始化
+
+void factory_start(fac* p_factory) {
+	if(p_factory->start_flag==0) {
 		int i;
-		for(i=0;i<pf->pthread_num;i++)
-		{
-			pthread_create(&pf->pthid[i],NULL,pf->thread_func,pf);
+		for(i=0; i < p_factory->pthread_num; i++) {
+			pthread_create(&p_factory->pthid[i], NULL, p_factory->thread_func, p_factory);
 		}
-		pf->start_flag=1;
+		p_factory->start_flag = 1;
 	}
 }

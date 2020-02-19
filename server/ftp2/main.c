@@ -1,19 +1,36 @@
 #include"factory.h"
 
+// typedef struct{
+// 	pthread_t* pthid;
+// 	pthread_cond_t cond;
+// 	fd_queue que;
+// 	int pthread_num;
+// 	p_func thread_func;
+// 	int start_flag;
+// }fac, *pfac;
+
+
+// typedef struct{
+// 	pfd_node que_head, que_tail;
+// 	int que_capacity;
+// 	int que_size;
+// 	pthread_mutex_t que_mutex;
+// }fd_queue, *p_fd_queue;
+
 void* thread_handle(void* p) {
-	fac* pf=(fac*)p;
-	que_t* pq=&pf->que;//取队列
-	node_t* pcur;
+	fac* p_fac=(fac*)p;
+	fd_queue* fd_que = &p_fac->que;//取队列
+	fd_node* pcur;
 	char path[100]={0};
-	getcwd(path,sizeof(path));//获取目录路径
+	getcwd(path, sizeof(path));//获取目录路径
 	while(1) {
-		pthread_mutex_lock(&pq->que_mutex);
-		if(!pq->que_size) {
-			pthread_cond_wait(&pf->cond,&pq->que_mutex);
+		pthread_mutex_lock(&fd_que->que_mutex);
+		if(fd_que->que_size == 0) {
+			pthread_cond_wait(&p_fac->cond, &fd_que->que_mutex);
 		}
-		que_get(pq,&pcur);//取队列元素
-		pthread_mutex_unlock(&pq->que_mutex);
-		handle_cmd(pcur->new_fd,path);//传递new_fd，当前绝对路径
+		que_get(fd_que, &pcur);//取队列元素
+		pthread_mutex_unlock(&fd_que->que_mutex);
+		handle_cmd(pcur->new_fd, path);//传递new_fd，当前绝对路径
 		free(pcur);
 	}
 }
@@ -37,18 +54,18 @@ int main(int argc,char** argv) {
 	}
 	int reuse=1;
 	int ret;
-	ret=setsockopt(sfd,SOL_SOCKET,SO_REUSEADDR,&reuse,sizeof(int));
+	ret = setsockopt(sfd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(int));
 	if(ret==-1) {
 		perror("setsockopt");
 		return -1;
 	}//必须放在bind之前
-	struct sockaddr_in sevr;
-	bzero(&sevr,sizeof(sevr));
-	//memset(&sevr,0,sizeof(sevr));
-	sevr.sin_family = AF_INET;
-	sevr.sin_port=htons(atoi(argv[2]));
-	sevr.sin_addr.s_addr=inet_addr(argv[1]);
-	ret=bind(sfd, (struct sockaddr*)&sevr, sizeof(sevr));
+	struct sockaddr_in server;
+	bzero(&server,sizeof(server));
+	//memset(&server,0,sizeof(server));
+	server.sin_family = AF_INET;
+	server.sin_port = htons(atoi(argv[2]));
+	server.sin_addr.s_addr = inet_addr(argv[1]);
+	ret=bind(sfd, (struct sockaddr*)&server, sizeof(server));
 	if(ret==-1)	{
 		perror("bind");
 		return -1;
@@ -61,16 +78,16 @@ int main(int argc,char** argv) {
 		return -1;
 	}
 	int new_fd;
-	node_t* pnew;
-	que_t* pq=&f.que;
+	fd_node* pnew;
+	fd_queue* fd_que=&f.que;
 	while(1) {
-		new_fd=accept(sfd,NULL,NULL);
+		new_fd = accept(sfd,NULL,NULL);
 		writeFile("connected");
-		pnew=(node_t*)calloc(1, sizeof(node_t));
+		pnew = (fd_node*)calloc(1, sizeof(fd_node));
 		pnew->new_fd = new_fd;
-		pthread_mutex_lock(&pq->que_mutepqx);
-		que_set(pq, pnew);//new_fd加入队列
-		pthread_mutex_unlock(&pq->que_mutex);
+		pthread_mutex_lock(&fd_que->que_mutex);
+		que_set(fd_que, pnew);//new_fd加入队列
+		pthread_mutex_unlock(&fd_que->que_mutex);
 		pthread_cond_signal(&f.cond);//有任务，触发条件变量
 	}
 	return 0;
