@@ -1,9 +1,9 @@
 #include"factory.h"
 
 // typedef struct{
-// 	pthread_t* pthid;
+// 	pthread_t* pthid; // 创建各个线程
 // 	pthread_cond_t cond;
-// 	fd_queue que;
+// 	fd_queue que;  // 文件描述符队列
 // 	int pthread_num;
 // 	pfunc thread_func;
 // 	int start_flag;
@@ -12,8 +12,8 @@
 void factory_init(fac* p_factory, pfunc pthread_func, int capacity) {
 	p_factory->pthid = (pthread_t*)calloc(p_factory->pthread_num, sizeof(pthread_t));
 	pthread_cond_init(&p_factory->cond, NULL);
-	que_init(&p_factory->que, capacity);
-	p_factory->thread_func = pthread_func;
+	que_init(&p_factory->que, capacity); // 文件描述符队列
+	p_factory->thread_func = pthread_func; // 注册线程函数pthread_func
 }//p_factory->start_flag已在main函数初始化
 
 void factory_start(fac* p_factory) {

@@ -6,43 +6,38 @@ struct file_msg{
 	char file_name[100];
 };
 
-void send_ls(int new_fd,char* path)
-{
+void send_ls(int new_fd, char* path) {
 	writeFile("ls -l");
 	char chpath[100]={0};
-	strcpy(chpath,path);
+	strcpy(chpath, path);
 	chdir(chpath);
 	train t;
 	struct file_msg msg;
-	bzero(&msg,sizeof(struct file_msg));
+	bzero(&msg, sizeof(struct file_msg));
 	DIR* dir;
-	dir=opendir(chpath);
+	dir = opendir(chpath);
 	struct stat buf;
-	bzero(&buf,sizeof(struct stat));
+	bzero(&buf, sizeof(struct stat));
 	struct dirent* p;
 	int len;
-	while((p=readdir(dir))!=NULL)
-	{
-		if(!strcmp(p->d_name,".")||!strcmp(p->d_name,"..")||p->d_name[0]=='.'){
-		}else
-		{
-			stat(p->d_name,&buf);
-			if(S_ISDIR(buf.st_mode))
-			{
-				msg.type='d';
-			}else
-			{
-				msg.type='-';
+	while((p = readdir(dir)) != NULL) {
+		if(!strcmp(p->d_name, ".") || !strcmp(p->d_name, "..") || p->d_name[0] == '.'){
+		}else {
+			stat(p->d_name, &buf);
+			if(S_ISDIR(buf.st_mode)) {
+				msg.type = 'd';
+			}else {
+				msg.type = '-';
 			}
-			strcpy(msg.file_name,p->d_name);
+			strcpy(msg.file_name, p->d_name);
 			t.len=strlen(msg.file_name);
-			msg.size=buf.st_size;
-			memcpy(t.buf,&msg,9+t.len);
-			send_n(new_fd,(char*)&t,13+t.len);//8+1+strlen
+			msg.size = buf.st_size;
+			memcpy(t.buf, &msg, 9+t.len);
+			send_n(new_fd, (char*)&t, 13 + t.len);//8+1+strlen
 		}
 	}
 	t.len=0;
-	send_n(new_fd,(char*)&t,4);
+	send_n(new_fd, (char*)&t, 4);
 	chdir(path);//切回源目录,多个客户端时改动
 }
 	
