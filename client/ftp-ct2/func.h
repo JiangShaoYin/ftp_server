@@ -17,7 +17,7 @@ int send_n(int,char*,int);
 int recv_n(int,char*,int);
 void tran_file(int,char*);
 
-int login_client(int sfd);
+int login_client(int socket_fd);
 
 
 #endif

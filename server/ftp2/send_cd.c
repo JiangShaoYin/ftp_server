@@ -1,13 +1,13 @@
-#include "factory.h"
+#include "ThreadPooltory.h"
 //cd ..
 //cd 相对路径名
-void send_wrg(int new_fd) {
+void send_wrg(int fd) {
 	char wrg[100]= "please enter the right directory";
-	send(new_fd, wrg, sizeof(wrg), 0);
+	send(fd, wrg, sizeof(wrg), 0);
 	return;
 }
 
-void send_cd(int new_fd, char* path) { //path为当前目录路径
+void send_cd(int fd, char* path) { //path为当前目录路径
 	DIR* dir;
 	dir = opendir(path);
 	struct dirent* p;
@@ -19,7 +19,7 @@ void send_cd(int new_fd, char* path) { //path为当前目录路径
 		i++;
 	}
 	printf("%s\n", path);
-	recv(new_fd, msg, sizeof(msg), 0);
+	recv(fd, msg, sizeof(msg), 0);
 	char log[100]= {0};
 	sprintf(log, "%s %s", "cd", msg);
 	writeFile(log);//记录cd
@@ -32,7 +32,7 @@ void send_cd(int new_fd, char* path) { //path为当前目录路径
 			printf("%s\n", path);
 			bzero(&msg, sizeof(msg));
 			strcpy(msg, path);
-			send(new_fd, msg, strlen(msg), 0);
+			send(fd, msg, strlen(msg), 0);
 			goto end;
 		}else{
 			while((p = readdir(dir)) != NULL) {
@@ -42,17 +42,17 @@ void send_cd(int new_fd, char* path) { //path为当前目录路径
 					count++;
 					bzero(&msg, sizeof(msg));
 					strcpy(msg, path);
-					send(new_fd, msg, strlen(msg), 0);
+					send(fd, msg, strlen(msg), 0);
 					goto end;
 				}
 			}
-			send_wrg(new_fd);
+			send_wrg(fd);
 			goto end;
 		}
 	}
 	bzero(&msg,sizeof(msg));
 	strcpy(msg,"access denied");
-	send(new_fd, msg, strlen(msg), 0);
+	send(fd, msg, strlen(msg), 0);
 	return;
 end:
 	return;

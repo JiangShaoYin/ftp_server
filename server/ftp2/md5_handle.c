@@ -1,4 +1,4 @@
-#include"factory.h"
+#include"ThreadPooltory.h"
 
 int MD5_file(char* file_path,char* encrypted) {//加密文件，加密结果
 	MD5_CTX md5;

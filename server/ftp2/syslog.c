@@ -1,4 +1,4 @@
-#include "factory.h"
+#include "ThreadPooltory.h"
 
 char Path1[50]= "/home/leechan/linux/project/server/ftp2/log/log";
 

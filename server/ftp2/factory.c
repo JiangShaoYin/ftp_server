@@ -1,27 +1,27 @@
-#include"factory.h"
+#include "ThreadPooltory.h"
 
 // typedef struct{
-// 	pthread_t* pthid; // 创建各个线程
+// 	pthread_t* pthids; // 创建各个线程
 // 	pthread_cond_t cond;
-// 	fd_queue que;  // 文件描述符队列
+// 	SocketQueue que;  // 文件描述符队列
 // 	int pthread_num;
 // 	pfunc thread_func;
 // 	int start_flag;
-// }fac, *pfac;
+// }ThreadPool, *pThreadPool;
 
-void factory_init(fac* p_factory, pfunc pthread_func, int capacity) {
-	p_factory->pthid = (pthread_t*)calloc(p_factory->pthread_num, sizeof(pthread_t));
-	pthread_cond_init(&p_factory->cond, NULL);
-	que_init(&p_factory->que, capacity); // 文件描述符队列
-	p_factory->thread_func = pthread_func; // 注册线程函数pthread_func
-}//p_factory->start_flag已在main函数初始化
+void ThreadPoolInit(ThreadPool* thread_pooltory, pfunc pthread_func, int capacity) {
+  thread_pooltory->pthids = (pthread_t*)calloc(thread_pooltory->pthread_num, sizeof(pthread_t));
+  pthread_cond_init(&thread_pooltory->cond, NULL); // 初始化条件变量
+  que_init(&thread_pooltory->que, capacity);    // 文件描述符队列
+  thread_pooltory->thread_func = pthread_func;  // 注册线程函数pthread_func
+}  // thread_pooltory->start_flag已在main函数初始化
 
-void factory_start(fac* p_factory) {
-	if(p_factory->start_flag==0) {
-		int i;
-		for(i=0; i < p_factory->pthread_num; i++) {
-			pthread_create(&p_factory->pthid[i], NULL, p_factory->thread_func, p_factory);
-		}
-		p_factory->start_flag = 1;
-	}
+void ThreadPoolStart(ThreadPool* thread_pooltory) {
+  if (thread_pooltory->start_flag == 0) {
+    int i;
+    for (i = 0; i < thread_pooltory->pthread_num; i++) {
+      pthread_create(&thread_pooltory->pthids[i], NULL, thread_pooltory->thread_func, thread_pooltory);
+    }
+    thread_pooltory->start_flag = 1;
+  }
 }

@@ -1,37 +1,38 @@
-#include"factory.h"
+#include"ThreadPooltory.h"
 
 // typedef struct{
-// 	pthread_t* pthid;
+// 	pthread_t* pthids;
 // 	pthread_cond_t cond;
-// 	fd_queue que;
+// 	SocketQueue que;
 // 	int pthread_num;
 // 	p_func thread_func;
 // 	int start_flag;
-// }fac, *pfac;
+// }ThreadPool, *pThreadPool;
 
 
 // typedef struct{
-// 	pfd_node que_head, que_tail;
+// 	SocketNode* que_head, que_tail;
 // 	int que_capacity;
 // 	int que_size;
-// 	pthread_mutex_t que_mutex;
-// }fd_queue, *p_fd_queue;
+// 	pthread_mutex_t mutex_;
+// }SocketQueue, *SocketQueue*;
 
 void* thread_handle(void* p) {
-	fac* p_fac = (fac*)p;
-	fd_queue* fd_que = &p_fac->que;//取队列
-	fd_node* pcur;
-	char path[100]={0};
-	getcwd(path, sizeof(path));//获取目录路径
+	ThreadPool* thread_pool = (ThreadPool*)p;
+	SocketQueue* socket_que = &thread_pool->que;//取队列
+	SocketNode* new_socket;
+	char path[100] = {0};
+	getcwd(path, sizeof(path));//获取当前目录路径
 	while(1) {
-		pthread_mutex_lock(&fd_que->que_mutex);
-		if(fd_que->que_size == 0) {
-			pthread_cond_wait(&p_fac->cond, &fd_que->que_mutex); // 排队等待条件成立
+		pthread_mutex_lock(&socket_que->mutex_);
+		if(socket_que->que_size == 0) { // 阻塞在这个地方，等待客户连接。
+			pthread_cond_wait(&thread_pool->cond, &socket_que->mutex_); //socket都在使用， 子线程都忙， 等待哪个子线程闲下来
 		}
-		que_get(fd_que, &pcur);//取队列元素
-		pthread_mutex_unlock(&fd_que->que_mutex);
-		handle_cmd(pcur->new_fd, path);//传递new_fd，当前绝对路径
-		free(pcur);
+		que_get(socket_que, &new_socket);// 取队列元素
+		pthread_mutex_unlock(&socket_que->mutex_);
+
+		handle_cmd(new_socket->fd, path);//传递fd，当前绝对路径
+		free(new_socket);
 	}
 }
 
@@ -42,19 +43,15 @@ int main(int argc,char** argv) {
 		printf("./server lack of args IP PORT Thread_NUM CAPACITY");
 		return -1;
 	}
-	fac f; // pid, 线程数，维持的socket fd, 线程函数thread_func
-	bzero(&f, sizeof(f));//初始化
-	f.pthread_num = atoi(argv[3]);
-	int capacity = atoi(argv[4]);
-	factory_init(&f, thread_handle, capacity); // 创建capacity个子线程
-	int sfd = socket(AF_INET, SOCK_STREAM, 0);
-	if(sfd == -1) {
+	
+	int socket_fd = socket(AF_INET, SOCK_STREAM, 0);
+	if(socket_fd == -1) {
 		perror("socket");
 		return -1;
 	}
 	int reuse = 1;
 	int ret;
-	ret = setsockopt(sfd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(int)); // set reuse == 1,  when restart the program, the port is still available. 
+	ret = setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(int)); // set reuse == 1,  when restart the program, the port is still available. 
 	if(ret == -1) {
 		perror("setsockopt");
 		return -1;
@@ -65,43 +62,51 @@ int main(int argc,char** argv) {
 	server.sin_family = AF_INET;
 	server.sin_port = htons(atoi(argv[2])); // 服务器端口号
 	server.sin_addr.s_addr = inet_addr(argv[1]); // 服务器地址
-	ret = bind(sfd, (struct sockaddr*)&server, sizeof(server)); // 端口号和ip交给server
+	ret = bind(socket_fd, (struct sockaddr*)&server, sizeof(server)); // 端口号和ip交给server
 	if(ret == -1) {
 		perror("bind");
 		return -1;
 	}
-	factory_start(&f);//创建线程。
 
-	ret = listen(sfd, 10); // 一个socket可以排队的最大连接个数为10个
+	ThreadPool thread_pool; // pid, 线程数，维持的socket fd, 线程函数thread_func
+	bzero(&thread_pool, sizeof(f));//初始化
+	thread_pool.pthread_num = atoi(argv[3]);
+	int capacity = atoi(argv[4]);
+	ThreadPoolInit(&thread_pool, thread_handle, capacity); // 创建capacity个子线程
+	ThreadPoolStart(&thread_pool);//创建线程。
+
+	ret = listen(socket_fd, 10); // 一个socket可以排队的最大连接个数为10个
 	if(ret == -1) {
 		perror("listen");
 		return -1;
 	}
-	int new_fd;
-	fd_node* pnew;
-	fd_queue* fd_que = &f.que;
+	int fd;
+	SocketNode* socket_node;
+	SocketQueue* socket_que = &thread_pool.que;
 
 // typedef struct{
-// 	p_fd_node que_head, que_tail;
+// 	SocketNode que_head, que_tail;
 // 	int que_capacity;
 // 	int que_size;
-// 	pthread_mutex_t que_mutex;
-// }fd_queue, *p_fd_queue;
+// 	pthread_mutex_t mutex_;
+// }SocketQueue, *SocketQueue*;
 
 	while(1) {
-		new_fd = accept(sfd, NULL, NULL); // sfd是父进程监听的socket描述符，必须使用while循环，每次循环阻塞在accept函数，等待新的连接到来，这样才能返回新的socket。
+		new_fd = accept(socket_fd, NULL, NULL); // socket_fd是父进程监听的socket描述符，必须使用while循环，每次循环阻塞在accept函数，等待新的连接到来，这样才能返回新的socket。
 		writeFile("connected");
-		pnew = (fd_node*)calloc(1, sizeof(fd_node));
-		pnew->new_fd = new_fd; 
-		pthread_mutex_lock(&fd_que->que_mutex);
-		que_set(fd_que, pnew);//pnew加入队尾
-		pthread_mutex_unlock(&fd_que->que_mutex);
-		pthread_cond_signal(&f.cond);//发送信号，让等待cond条件的线程激活。
+		socket_node = (SocketNode*)calloc(1, sizeof(SocketNode));
+		socket_node->fd = new_fd;
+
+		pthread_mutex_lock(&socket_que->mutex_);
+		que_add(socket_que, socket_node);//socket_node加入队尾
+		pthread_mutex_unlock(&socket_que->mutex_);
+
+		pthread_cond_signal(&thread_pool.cond);//发送信号，让等待cond条件的线程激活。
 	}
 	return 0;
 }
 
 // typedef struct tag_node {
-// 	int new_fd;
+// 	int fd;
 // 	struct tag_node* pNext;
-// }fd_node,*p_fd_node;
+// }SocketNode,*SocketNode;

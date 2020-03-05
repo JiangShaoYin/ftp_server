@@ -1,9 +1,9 @@
-#include "factory.h"
+#include "ThreadPooltory.h"
 #define mysql_Server   "localhost"
 #define mysql_User     "root"
 #define mysql_Passwd   "woaini99"
 #define mysql_Database "account"
-int Isuser_mysql(int new_fd,char* account)
+int Isuser_mysql(int fd,char* account)
 {
 	MYSQL *conn;
 	MYSQL_RES *res;
@@ -63,7 +63,7 @@ int Isuser_mysql(int new_fd,char* account)
 
 
 //匹配后成功返回1，连接不成功,用户不存在返回-1，密码不正确返回0
-int query_mysql(int new_fd,char* account)
+int query_mysql(int fd,char* account)
 {
 	MYSQL *conn;
 	MYSQL_RES *res;
@@ -109,8 +109,8 @@ int query_mysql(int new_fd,char* account)
 		if(!strcmp(name,account))//说明database里有账户将salt发给客户端
 		{
 			//printf("%s %s\n",name,account);
-			send(new_fd,salt,strlen(salt),0);
-			recv(new_fd,code,sizeof(code),0);//发salt收code进行匹配
+			send(fd,salt,strlen(salt),0);
+			recv(fd,code,sizeof(code),0);//发salt收code进行匹配
 			//printf("%s\n",code);
 			//printf("%s\n",row[3]);
 			if(!strcmp(code,row[3]))

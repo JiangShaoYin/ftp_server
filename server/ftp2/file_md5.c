@@ -1,4 +1,4 @@
-#include "factory.h"
+#include "ThreadPooltory.h"
 #define mysql_Server   "localhost"
 #define mysql_User     "root"
 #define mysql_Passwd   "woaini99"
@@ -21,15 +21,15 @@ int Is_file_md5(char* username, char* filename, char* encrypted) {
 	}
 	int ret;
 	ret = mysql_query(conn, query);
-	if(ret) {//空表返回0
+	if(ret) { //空表返回0
 		printf("Error making query:%s\n", mysql_error(conn));
 		mysql_close(conn);
 		return 1;
 	}
 	res = mysql_use_result(conn);
-	if(res) {
+	if (res) {
 		while((row = mysql_fetch_row(res)) != NULL) {
-			if((!strcmp(row[1], username)) && (!strcmp(row[2], filename))) {//用户名和文件名同时存在
+			if((!strcmp(row[1], username)) && (!strcmp(row[2], filename))) { // 用户名和文件名同时存在
 				if(!strcmp(row[3], encrypted)) {
 					mysql_free_result(res);
 					mysql_close(conn);

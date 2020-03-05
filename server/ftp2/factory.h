@@ -5,9 +5,9 @@
 typedef void* (*pfunc)(void*);
 //线程动作集合结构体
 typedef struct{
-	pthread_t* pthid;
+	pthread_t* pthids;
 	pthread_cond_t cond;
-	fd_queue que;
+	SocketQueue que;
 	int pthread_num;
 	pfunc thread_func;
 	int start_flag;
@@ -21,7 +21,7 @@ typedef struct{
 void factory_init(fac*,pfunc,int);
 //启动子线程开始工作
 void factory_start(fac*);
-//传递new_fd函数
+//传递fd函数
 int send_n(int,char*,int);
 int recv_n(int,char*,int);
 //处理文件

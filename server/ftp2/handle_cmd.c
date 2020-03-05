@@ -1,16 +1,16 @@
-#include"factory.h"
+#include"ThreadPooltory.h"
 
-void handle_cmd(int new_fd, char* path) {
+void handle_cmd(int fd, char* path) {
 	char username[15] = {0};
 	int i = 3;
 	int res;
 	int flag = -2;
 lable:
-	recv(new_fd, (char*)&flag, sizeof(flag), 0);//0.退出，1.登陆，2.注册
+	recv(fd, (char*)&thread_poollag, sizeof(flag), 0);//0.退出，1.登陆，2.注册
 	//printf("flag:%d\n",flag);//测试
 	if (flag == 1) { //登陆
 		bzero(&username, sizeof(username));
-		res = login_account(new_fd, username); //res=1证明登陆成功
+		res = login_account(fd, username); //res=1证明登陆成功
 		writeFile("client log in...");
 		if(res == 0) {      //密码不正确
 			i--;
@@ -23,7 +23,7 @@ lable:
 	}
 	else if (flag == 2) { //注册
 		bzero(&username, sizeof(username));
-		res = new_account(new_fd, username);
+		res = new_account(fd, username);
 		writeFile("client redit new account...");
 		if(res == 0) {//用户存在
 			goto lable;
@@ -47,18 +47,18 @@ lable:
 
 	while(1) {
 		int command=-1;
-		int ret = recv(new_fd, &command, 4, 0);
+		int ret = recv(fd, &command, 4, 0);
 		if(ret==0) {
 			return;
 		}
 		//printf("cmd:%d ret:%d\n",command,ret);
 		switch(command) {
-			case 0 : send_cd(new_fd, path); break;//cd命令
-			case 1 : send_ls(new_fd, path); break;//ls命令
-			case 2 : get_file(new_fd, username); break;//client端puts命令
-			case 3 : tran_file(new_fd, username); break;//client端gets命令
-			case 4 : send_rm(new_fd, path); break;//remove命令
-			case 5 : send_pwd(new_fd, path); break;//pwd命令
+			case 0 : send_cd(fd, path); break;//cd命令
+			case 1 : send_ls(fd, path); break;//ls命令
+			case 2 : get_file(fd, username); break;//client端puts命令
+			case 3 : tran_file(fd, username); break;//client端gets命令
+			case 4 : send_rm(fd, path); break;//remove命令
+			case 5 : send_pwd(fd, path); break;//pwd命令
 			case 6 : return;
 			default : break;
 		}
